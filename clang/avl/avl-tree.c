@@ -15,7 +15,7 @@ struct Node {
 
 bool insert_node(struct Node **root, struct Node *node);
 void print_tree(struct Node *root);
-int tree_height(struct Node *root, int depth);
+int tree_depth(struct Node *root, int depth);
 
 int main() {
     srand(time(NULL));
@@ -31,7 +31,7 @@ int main() {
     }
 
     print_tree(root);
-    printf("Tree height: %d", tree_height(root, 0));
+    printf("Tree depth: %d", tree_depth(root, 1));
     return 0;
 }
 
@@ -50,30 +50,39 @@ bool insert_node(struct Node **root, struct Node *node) {
             (*root)->right = node;
             return true;
         }
-        return insert_node(&((*root)->right), node);
+
+        bool insert_res = insert_node(&((*root)->right), node);
+        if(insert_res == true) (*root)->balance_factor = tree_depth((*root)->left, 1) - tree_depth((*root)->right, 1);
+        return insert_res;
     }
 
     if((*root)->left == NULL) {
         (*root)->left = node;
         return true;
     }
-    return insert_node(&((*root)->left), node);
+
+    bool insert_res = insert_node(&((*root)->left), node);
+    if(insert_res == true) (*root)->balance_factor = tree_depth((*root)->left, 1) - tree_depth((*root)->right, 1);
+    return insert_res;
 }
 
-int tree_height(struct Node *root, int depth) {
+int tree_depth(struct Node *root, int depth) {
     if(root == NULL) {
         return depth;
     }
 
+    int l_depth = depth;
     if(root->left != NULL) {
-        depth = tree_height(root, depth+1);
+        l_depth = tree_depth(root->left, l_depth+1);
     }
 
+    int r_depth = depth;
     if(root->right != NULL) {
-        depth = tree_height(root, depth+1);
+        r_depth = tree_depth(root->right, r_depth+1);
     }
 
-    return depth;
+    if(l_depth > r_depth) return l_depth;
+    return r_depth;
 }
 
 int level = 0;
@@ -85,8 +94,7 @@ void print_tree(struct Node *root) {
     for(int i = 1; i < level; i++) {
         printf("%s", "| ");
     }
-    printf("%c %d\n", '-', root->val);
-    // printf("%*s %c %d\n", level-1, "|", '>', root->val);
+    printf("%c %d -- %d\n", '-', root->val, root->balance_factor);
 
     if(root->left != NULL) {
         print_tree(root->left);
